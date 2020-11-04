@@ -3,9 +3,18 @@ package sylllys.insideout.factories;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import sylllys.insideout.entities.pojo.ShellCommand;
+import sylllys.insideout.properties.ShellProperties;
 
+@Component
 public class ShellFactory {
+
+  @Autowired
+  ShellProperties shellProperties;
 
   public boolean isThisWindowsOS() {
 
@@ -41,7 +50,28 @@ public class ShellFactory {
     return output;
   }
 
+  private boolean isShellCommandAllowed(String requestedShellCommand) {
+
+    if (shellProperties.getAllowedCommands() == null) {
+      return false;
+    }
+
+    for (String allowedShellCommand : shellProperties.getAllowedCommands().split(",")) {
+      if (requestedShellCommand.equalsIgnoreCase(allowedShellCommand.trim())) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   public void executeCommand(ShellCommand command) {
+
+    if (!isShellCommandAllowed(command.getCommand().split(" ", 2)[0])) {
+      command.setError("This command is not allowed, please add this to insideout allowed list.");
+      command.setExitCode(3);
+      return;
+    }
 
     try {
 

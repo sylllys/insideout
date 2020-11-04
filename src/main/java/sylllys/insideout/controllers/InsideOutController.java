@@ -3,6 +3,7 @@ package sylllys.insideout.controllers;
 import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,6 +18,9 @@ import sylllys.insideout.factories.ShellFactory;
 public class InsideOutController {
 
   private static final Logger logger = LogManager.getLogger(InsideOutController.class);
+
+  @Autowired
+  ShellFactory shellFactory;
 
   @GetMapping("/sayhello")
   public SayHello sayhello() {
@@ -33,7 +37,7 @@ public class InsideOutController {
 
     for (ShellCommand command : shellCommands) {
 
-      new ShellFactory().executeCommand(command);
+      shellFactory.executeCommand(command);
 
       if (command.getExitCode() != 0) {
         break;
