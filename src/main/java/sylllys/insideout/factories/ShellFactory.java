@@ -1,20 +1,28 @@
 package sylllys.insideout.factories;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
+import sylllys.insideout.controllers.InsideOutController;
 import sylllys.insideout.entities.pojo.ShellCommand;
+import sylllys.insideout.entities.pojo.ShellScript;
 import sylllys.insideout.properties.ShellProperties;
 
 @Component
 public class ShellFactory {
+
+  private static final Logger logger = LogManager.getLogger(ShellFactory.class);
 
   @Autowired
   ShellProperties shellProperties;
@@ -68,6 +76,21 @@ public class ShellFactory {
     return false;
   }
 
+  private boolean isShellScriptAllowed(String requestedShellScript) {
+
+    if (shellProperties.getAllowedScripts() == null) {
+      return false;
+    }
+
+    for (String allowedShellScript : shellProperties.getAllowedScripts().split(",")) {
+      if (requestedShellScript.equalsIgnoreCase(allowedShellScript.trim())) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   private boolean isChainedCommand(String requestedShellCommandLine) {
 
     final String regex = "(?=(?:[^\\\"]*\\\"[^\\\"]*\\\")*[^\\\"]*$)";
@@ -89,9 +112,9 @@ public class ShellFactory {
     return true;
   }
 
-  private boolean areDoubleQuotesBalanced(String requestedShellCommandLine) {
+  private boolean areDoubleQuotesBalanced(String text) {
 
-    int count = StringUtils.countMatches(requestedShellCommandLine, "\"");
+    int count = StringUtils.countMatches(text, "\"");
 
     return count % 2 == 0;
   }
@@ -127,7 +150,43 @@ public class ShellFactory {
       command.setExitCode(process.waitFor());
 
     } catch (Exception e) {
-      command.setOutput(e.getStackTrace().toString());
+      logger.error(e.getStackTrace());
+      command.setError("Unhandled error when tried to execute this request");
+    }
+  }
+
+  public void executeShellScript(ShellScript shellScript) {
+
+    if (!isShellScriptAllowed(shellScript.getScriptPath())) {
+      shellScript
+          .setError("This script path is not allowed, please add this to insideout allowed list.");
+      shellScript.setExitCode(3);
+      return;
+    }
+
+    if (!new File(shellScript.getScriptPath()).exists()) {
+      shellScript
+          .setError("No script exists with this path");
+      shellScript.setExitCode(3);
+      return;
+    }
+
+    try {
+
+      ArrayList<String> command = new ArrayList<String>();
+      command.add(shellScript.getScriptPath());
+      command.addAll(shellScript.getArgs());
+
+      ProcessBuilder builder = new ProcessBuilder(command);
+      Process process = builder.start();
+
+      shellScript.setOutput(captureCommandOutput(process));
+      shellScript.setError(captureCommandError(process));
+      shellScript.setExitCode(process.waitFor());
+
+    } catch (Exception e) {
+      logger.error(e.getStackTrace());
+      shellScript.setError("Unhandled error when tried to execute this request");
     }
   }
 

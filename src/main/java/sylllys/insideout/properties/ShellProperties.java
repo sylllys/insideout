@@ -16,4 +16,14 @@ public class ShellProperties {
   }
 
   private String allowedCommands;
+
+  public String getAllowedScripts() {
+    return allowedScripts;
+  }
+
+  public void setAllowedScripts(String allowedScripts) {
+    this.allowedScripts = allowedScripts;
+  }
+
+  private String allowedScripts;
 }

@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import sylllys.insideout.entities.pojo.SayHello;
 import sylllys.insideout.entities.pojo.ShellCommand;
+import sylllys.insideout.entities.pojo.ShellScript;
 import sylllys.insideout.factories.ShellFactory;
 
 @RestController
@@ -30,8 +31,8 @@ public class InsideOutController {
 
   }
 
-  @PostMapping("/shell")
-  public List<ShellCommand> shell(@RequestBody List<ShellCommand> shellCommands) {
+  @PostMapping("/shell/command")
+  public List<ShellCommand> shellCommand(@RequestBody List<ShellCommand> shellCommands) {
 
     logger.info("Received request to execute shell command");
 
@@ -46,5 +47,23 @@ public class InsideOutController {
 
     logger.info("Completed request to execute shell command");
     return shellCommands;
+  }
+
+  @PostMapping("/shell/script")
+  public List<ShellScript> shell(@RequestBody List<ShellScript> shellScripts) {
+
+    logger.info("Received request to execute shell script");
+
+    for (ShellScript shellScript : shellScripts) {
+
+      shellFactory.executeShellScript(shellScript);
+
+      if (shellScript.getExitCode() == null || shellScript.getExitCode() != 0) {
+        break;
+      }
+    }
+
+    logger.info("Completed request to execute shell script");
+    return shellScripts;
   }
 }
