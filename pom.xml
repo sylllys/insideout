@@ -59,7 +59,7 @@
     <dependency>
       <groupId>io.github.sylllys</groupId>
       <artifactId>insideout-shell</artifactId>
-      <version>0.0.1</version>
+      <version>20201203-125509</version>
     </dependency>
   </dependencies>
 
@@ -148,6 +148,19 @@
             </executions>
           </plugin>
 
+          <plugin>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-maven-plugin</artifactId>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+
+    <profile>
+      <id>mvn-local-build</id>
+      <build>
+        <plugins>
           <plugin>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-maven-plugin</artifactId>
